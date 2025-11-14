@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: ' https://github.com/DiegoCam55/Integracion-Continua-inventario.git'
+                git branch: 'main', url: 'https://github.com/DiegoCam55/Integracion-Continua-inventario.git'
             }
         }
 
