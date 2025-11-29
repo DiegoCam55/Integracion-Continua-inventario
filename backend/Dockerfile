@@ -5,6 +5,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+# instalar bash y curl para codecov uploader (y ca-certificates)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
 EXPOSE 5000
