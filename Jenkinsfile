@@ -34,27 +34,30 @@ pipeline {
         }
 
       stage('Tests & Codecov') {
-    withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
-        sh '''
-            set -e
-            echo "Ejecutando pytest con coverage dentro del contenedor backend..."
+    steps {
+        withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
+            sh '''
+                set -e
+                echo "Ejecutando pytest con coverage dentro del contenedor backend..."
 
-            # Ejecuta pytest, apunta a la carpeta de código (backend)
-            docker compose run --rm -v $PWD:/app backend /bin/bash -c "
-                ls -R /app
-                pytest backend/tests --maxfail=1 --disable-warnings -q --cov=backend --cov-report=xml || true
-            "
+                # Ejecuta pytest en la carpeta backend/tests
+                docker compose run --rm -v $PWD:/app backend /bin/bash -c "
+                    ls -R /app
+                    pytest backend/tests --maxfail=1 --disable-warnings -q --cov=backend --cov-report=xml || true
+                "
 
-            # Copia coverage.xml si existe
-            if [ -f backend/coverage.xml ]; then
-                cp backend/coverage.xml coverage.xml
-                echo "coverage.xml copiado para Codecov."
-            else
-                echo "No se encontró coverage.xml, se omite."
-            fi
-        '''
+                # Copia coverage.xml si existe
+                if [ -f backend/coverage.xml ]; then
+                    cp backend/coverage.xml coverage.xml
+                    echo "coverage.xml copiado para Codecov."
+                else
+                    echo "No se encontró coverage.xml, se omite."
+                fi
+            '''
+        }
     }
 }
+
 
 
 
