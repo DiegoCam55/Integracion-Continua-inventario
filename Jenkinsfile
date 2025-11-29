@@ -36,7 +36,7 @@ pipeline {
      stage('Tests & Codecov') {
     steps {
         withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
-            sh '''
+            
 sh '#!/bin/bash -e
 echo "Running pytest with coverage inside backend container..."
 
@@ -53,7 +53,7 @@ if [ -f coverage.xml ]; then
 else
     echo "coverage.xml not found, skipping Codecov upload"
 fi
-            '''
+           
         }
     }
     post {
