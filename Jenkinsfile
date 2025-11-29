@@ -41,13 +41,10 @@ pipeline {
 set -e
 echo "Running pytest with coverage inside backend container..."
 
-# Ejecutar los tests dentro del contenedor backend
-docker compose run --name ci_backend --rm backend /bin/sh -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml || true"
+# Ejecutar tests montando el directorio de Jenkins como volumen
+docker compose run --rm -v $PWD:/app backend /bin/bash -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml"
 
-# Copiar coverage.xml desde el contenedor, si existe
-docker cp ci_backend:/app/coverage.xml coverage.xml || echo "No coverage.xml found, skipping copy"
-
-# Subir a Codecov si coverage.xml existe
+# Ahora coverage.xml ya está en el workspace de Jenkins
 if [ -f coverage.xml ]; then
     echo "Uploading coverage.xml to Codecov..."
     bash <(curl -s https://codecov.io/bash) -f coverage.xml -t ${CODECOV_TOKEN} || echo "Codecov upload failed"
@@ -63,6 +60,7 @@ fi
         }
     }
 }
+
 
 
         stage('Deploy Frontend') {
