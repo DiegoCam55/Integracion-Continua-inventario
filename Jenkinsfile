@@ -36,7 +36,12 @@ pipeline {
         stage('Run Backend Tests') {
             steps {
                 sh """
-                    ${DOCKER_COMPOSE} run backend pytest --maxfail=1 --disable-warnings -q || echo 'No tests found'
+                    # Ejecutar pytest con cobertura
+                    ${DOCKER_COMPOSE} run --rm backend pytest --cov=. --cov-report=xml
+
+                    # Copiar coverage.xml desde el contenedor al workspace
+                    CONTAINER_ID=$(${DOCKER_COMPOSE} ps -q backend)
+                    docker cp $CONTAINER_ID:/app/coverage.xml coverage.xml || true
                 """
             }
         }
