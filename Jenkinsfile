@@ -44,16 +44,18 @@ pipeline {
             }
         }
 
-        stage('Upload to Codecov') {
-            steps {
-                withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
-                    sh """
-                        echo "Subiendo coverage a Codecov desde Jenkins host..."
-                        bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f ${WORKSPACE}/coverage.xml
-                    """
-                }
+           stage('Upload to Codecov') {
+        steps {
+            withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
+                sh '''
+                    echo "Subiendo coverage a Codecov desde Jenkins host..."
+                    curl -s https://codecov.io/bash -o codecov.sh
+                    bash codecov.sh -t $CODECOV_TOKEN -f ${WORKSPACE}/coverage.xml
+                '''
             }
         }
+    }
+
 
         stage('Deploy Frontend') {
             steps {
