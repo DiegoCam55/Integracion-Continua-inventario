@@ -46,6 +46,7 @@ pipeline {
   }
 }
     stage('Upload to Codecov') {
+        steps {
     withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
         sh '''
             echo "Subiendo coverage a Codecov..."
@@ -53,6 +54,7 @@ pipeline {
                 bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f /workspace/coverage.xml
             "
         '''
+        }
     }
 }
 
