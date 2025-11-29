@@ -42,10 +42,10 @@ set -e
 echo "Running pytest with coverage inside backend container..."
 
 # Ejecutar los tests dentro del contenedor backend
-docker compose run --name ci_backend --rm backend /bin/sh -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml || true"
+docker compose run --name ci_backend backend /bin/sh -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml"
+docker cp ci_backend:/app/coverage.xml coverage.xml
+docker rm ci_backend
 
-# Copiar coverage.xml desde el contenedor, si existe
-docker cp ci_backend:/app/coverage.xml coverage.xml || echo "No coverage.xml found, skipping copy"
 
 # Subir a Codecov si coverage.xml existe
 if [ -f coverage.xml ]; then
