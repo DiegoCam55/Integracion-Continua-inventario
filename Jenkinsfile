@@ -45,6 +45,16 @@ pipeline {
     """
   }
 }
+    stage('Upload to Codecov') {
+    withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
+        sh '''
+            echo "Subiendo coverage a Codecov..."
+            docker compose run --rm -v $PWD:/workspace backend /bin/bash -c "
+                bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN -f /workspace/coverage.xml
+            "
+        '''
+    }
+}
 
 
 
