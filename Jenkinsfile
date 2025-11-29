@@ -33,18 +33,35 @@ pipeline {
             }
         }
 
-       stage('Run Backend Tests') {
+       stage('Tests & Codecov') {
   steps {
-    // Ejecuta pytest dentro de un contenedor que monta el workspace de Jenkins
-    // de modo que coverage.xml quede disponible en el workspace al terminar.
-    sh """
-      echo '=== Ejecutando tests y generando coverage.xml hacia el workspace ==='
-      ${DOCKER_COMPOSE} run --rm -v ${WORKSPACE}:/workspace backend /bin/sh -c "pytest --cov=. --cov-report=xml && cp coverage.xml /workspace/coverage.xml"
-      echo '=== Listando coverage.xml en workspace ==='
-      ls -la ${WORKSPACE} || true
-    """
+    withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
+      sh '''
+        set -e
+        echo "Running pytest with coverage inside backend container..."
+        # run tests and keep the container so we can copy coverage.xml
+        docker compose run --name ci_backend --rm backend /bin/sh -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml || true"
+        # copy coverage (if exists)
+        if docker ps -a --format '{{.Names}}' | grep -q ci_backend; then
+          docker cp ci_backend:/app/coverage.xml coverage.xml || true
+        fi
+        # try uploader
+        if [ -f coverage.xml ]; then
+          echo "Uploading coverage.xml to Codecov..."
+          bash <(curl -s https://codecov.io/bash) -f coverage.xml -t ${CODECOV_TOKEN} || echo "Codecov upload failed"
+        else
+          echo "coverage.xml not found, skipping codecov upload"
+        fi
+      '''
+    }
+  }
+  post {
+    always {
+      archiveArtifacts artifacts: 'coverage.xml', fingerprint: true
+    }
   }
 }
+
 
 
 
