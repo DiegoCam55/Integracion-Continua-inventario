@@ -33,27 +33,33 @@ pipeline {
             }
         }
 
-      stage('Tests & Codecov') {
+     stage('Tests & Codecov') {
     steps {
         withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
             sh '''
-                set -e
-                echo "Ejecutando pytest con coverage dentro del contenedor backend..."
+#!/bin/bash
+set -e
+echo "Running pytest with coverage inside backend container..."
 
-                # Ejecuta pytest en la carpeta backend/tests
-                docker compose run --rm -v $PWD:/app backend /bin/bash -c "
-                    ls -R /app
-                    pytest backend/tests --maxfail=1 --disable-warnings -q --cov=backend --cov-report=xml || true
-                "
+# Ejecutar los tests dentro del contenedor backend
+docker compose run --name ci_backend --rm backend /bin/sh -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml || true"
 
-                # Copia coverage.xml si existe
-                if [ -f backend/coverage.xml ]; then
-                    cp backend/coverage.xml coverage.xml
-                    echo "coverage.xml copiado para Codecov."
-                else
-                    echo "No se encontró coverage.xml, se omite."
-                fi
+# Copiar coverage.xml desde el contenedor, si existe
+docker cp ci_backend:/app/coverage.xml coverage.xml || echo "No coverage.xml found, skipping copy"
+
+# Subir a Codecov si coverage.xml existe
+if [ -f coverage.xml ]; then
+    echo "Uploading coverage.xml to Codecov..."
+    bash <(curl -s https://codecov.io/bash) -f coverage.xml -t ${CODECOV_TOKEN} || echo "Codecov upload failed"
+else
+    echo "coverage.xml not found, skipping Codecov upload"
+fi
             '''
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'coverage.xml', fingerprint: true
         }
     }
 }
