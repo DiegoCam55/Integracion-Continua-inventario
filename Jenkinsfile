@@ -37,7 +37,9 @@ pipeline {
             steps {
             sh """
             # Ejecutar pytest con cobertura dentro del contenedor backend
-            ${DOCKER_COMPOSE} run --rm backend pytest --cov=. --cov-report=xml
+            #${DOCKER_COMPOSE} run --rm backend pytest --cov=. --cov-report=xml
+            docker compose run --rm backend pytest /app/tests -q --maxfail=1 --disable-warnings
+
 
             # Obtener el ID del contenedor backend ya iniciado
             CONTAINER_ID=`${DOCKER_COMPOSE} ps -q backend`
