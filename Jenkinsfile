@@ -37,14 +37,14 @@ pipeline {
     steps {
         withCredentials([string(credentialsId: 'CODECOV_TOKEN', variable: 'CODECOV_TOKEN')]) {
             
-sh '#!/bin/bash -e
+sh """
 echo "Running pytest with coverage inside backend container..."
 
 # Ejecutar los tests dentro del contenedor backend
 docker compose run --name ci_backend backend /bin/sh -c "pytest --maxfail=1 --disable-warnings -q --cov=. --cov-report=xml"
 docker cp ci_backend:/app/coverage.xml coverage.xml
 docker rm ci_backend
-'
+"""
 
 # Subir a Codecov si coverage.xml existe
 if [ -f coverage.xml ]; then
