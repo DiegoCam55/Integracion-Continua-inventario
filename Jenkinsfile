@@ -33,20 +33,19 @@ pipeline {
             }
         }
 
-        stage('Run Backend Tests') {
-            steps {
-            sh """
-            # Ejecutar pytest con cobertura dentro del contenedor backend
-            ${DOCKER_COMPOSE} run --rm backend pytest --cov=. --cov-report=xml
+       stage('Run Backend Tests') {
+  steps {
+    // Ejecuta pytest dentro de un contenedor que monta el workspace de Jenkins
+    // de modo que coverage.xml quede disponible en el workspace al terminar.
+    sh """
+      echo '=== Ejecutando tests y generando coverage.xml hacia el workspace ==='
+      ${DOCKER_COMPOSE} run --rm -v ${WORKSPACE}:/workspace backend /bin/sh -c "pytest --cov=. --cov-report=xml && cp coverage.xml /workspace/coverage.xml"
+      echo '=== Listando coverage.xml en workspace ==='
+      ls -la ${WORKSPACE} || true
+    """
+  }
+}
 
-            # Obtener el ID del contenedor backend ya iniciado
-            CONTAINER_ID=`${DOCKER_COMPOSE} ps -q backend`
-
-            # Copiar coverage.xml al workspace de Jenkins
-            docker cp \$CONTAINER_ID:/app/coverage.xml coverage.xml || true
-        """
-        }
-    }
 
 
         stage('Deploy Frontend') {
